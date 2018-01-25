@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <!-- newrelic browser agent. REMEMBER TO REPLACE THIS SCRIPT WITH YOUR OWN BROWSER AGENT -->
+  <script type="text/javascript" src="agent.js"></script>
+
+  <!-- new relic tracker -->
+  <script src="../dist/newrelic-video-anvato.min.js"></script>
+
+  <!-- Anvato -->
+  ​<script src='//w3.cdn.anvato.net/player/prod/v3/scripts/anvload.js'></script>
+</head>
+
+<body>
+  <div id="myVideo"></div>
+
+  <script>
+    AnvatoPlayer('myVideo').init({
+      trackTimePeriod: true,
+      playlist: [
+        {
+          url: "http://mcp-download.s3.amazonaws.com/anv-videos/variant/3697658.m3u8",
+          title: "Cosmos Laundromat",
+          poster: "http://mcp-media.s3.amazonaws.com/anv-pvw/F34/4C3/F344C330F8A147E4AA776B26550AD2EA_8.jpg"
+        }, {
+          url: "http://mcp-download.s3.amazonaws.com/anv-videos/variant/3697661.m3u8",
+          title: "Caminandes 2",
+          poster: "http://mcp-media.s3.amazonaws.com/anv-pvw/B98/C0D/B98C0DBDD0404D56AD70119379477993_6.jpg"
+        }, {
+          url: "http://mcp-download.s3.amazonaws.com/anv-videos/variant/3697596.m3u8",
+          title: "Elephant`s Dream",
+          poster: "http://mcp-media.s3.amazonaws.com/anv-pvw/AF6/ABE/AF6ABE1D34FE42F3AAD5C72216AC41C7_7.jpg"
+        }
+      ]
+    })
+
+    nrvideo.Core.addTracker(new nrvideo.AnvatoTracker('myVideo'))
+  </script>
+
+</body>
+
+</html>
