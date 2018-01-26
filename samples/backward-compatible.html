@@ -7,16 +7,15 @@
 
   <!-- new relic tracker -->
   <script src="../dist/newrelic-video-anvato.min.js"></script>
-
-  <!-- Anvato -->
-  ​<script src='//w3.cdn.anvato.net/player/prod/v3/scripts/anvload.js'></script>
 </head>
 
 <body>
   <div id="myVideo"></div>
 
   <script>
-    AnvatoPlayer('myVideo').init({
+    var anvp = {}
+    anvp.myVideo = {}
+    anvp.myVideo.config = {
       trackTimePeriod: true,
       playlist: [
         {
@@ -40,11 +39,26 @@
           }    
         }
       }
-    })
+    }
+    anvp.myVideo.onReady = function () {
+      var tracker = new nrvideo.AnvatoTracker('myVideo')
+      nrvideo.Core.addTracker(tracker)
+      
+      // Since this init method can't register listeners before the player is ready,
+      // we need to trigger this event manually
+      tracker.onReady()
 
-    nrvideo.Core.addTracker(new nrvideo.AnvatoTracker('myVideo'))
+      // Since this method only exposes one listener, you will need to call processEvent() 
+      // manually.
+      anvp.myVideo.setListener(function(event){
+        tracker.processEvent(event)
+      })
+    }
+
   </script>
 
+  <!-- Anvato -->
+  ​<script data-anvp='{"pInstance":"myVideo", "accessKey": "X8POa4zPPaKVZHqmWjuEzfP31b1QM9VN", "mcp":"anv", "playlist": 427}' src='//w3.cdn.anvato.net/player/prod/v3/scripts/anvload.js'></script>
 </body>
 
 </html>

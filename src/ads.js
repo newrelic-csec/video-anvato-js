@@ -2,8 +2,16 @@ import * as nrvideo from 'newrelic-video-core'
 import { version } from '../package.json'
 
 export default class JwplayerAdsTracker extends nrvideo.VideoTracker {
+  resetValues () {
+    this.playhead = null
+    this.id = null
+    this.provider = null
+    this.title = null
+    this.duration = null
+  }
+
   getTrackerName () {
-    return 'jwplayer-ads'
+    return 'anvato-ads'
   }
 
   getTrackerVersion () {
@@ -14,8 +22,12 @@ export default class JwplayerAdsTracker extends nrvideo.VideoTracker {
     return this.duration
   }
 
-  getSrc () {
-    return this.resource
+  getVideoId () {
+    return this.id
+  }
+
+  getAdPartner () {
+    return this.provider
   }
 
   getPlayhead () {
@@ -27,70 +39,129 @@ export default class JwplayerAdsTracker extends nrvideo.VideoTracker {
   }
 
   registerListeners () {
-    nrvideo.Log.debugCommonVideoEvents(this.player, [
-      null, 'adBlock', 'adStarted', 'adImpression', 'adPause', 'adPlay', 'adSkipped', 'adComplete',
-      'adClick', 'adError', 'adRequest'
-    ])
+    if (this.player.on) { // Anvato v3 system
+      if (nrvideo.Log.level <= nrvideo.Log.Levels.DEBUG) {
+        let ev = [
+          'AD_BREAKS',
+          'AD_BREAK_STARTED',
+          'AD_STARTED',
+          'AD_FIRST_QUARTILE',
+          'AD_MID_POINT',
+          'AD_THIRD_QUARTILE',
+          'AD_COMPLETED',
+          'AD_BREAK_COMPLETED',
+          'AD_SKIPPED',
+          'ALL_ADS_COMPLETED',
+          'AD_CLICKED',
+          'COMPANION_AVAILABLE',
+          'NON_LINEAR_AD_DISPLAYED',
+          'AD_IMMINENT',
+          'POPUP_DISPLAYED',
+          'POPUP_BLOCKED'
+        ]
 
-    this.player.on('adBlock', this.onBlock.bind(this))
-    this.player.on('adRequest', this.onRequest.bind(this))
-    this.player.on('adTime', this.onTime.bind(this))
-    this.player.on('adStarted', this.onStarted.bind(this))
-    this.player.on('adImpression', this.onImpression.bind(this))
-    this.player.on('adPause', this.onPause.bind(this))
-    this.player.on('adPlay', this.onPlay.bind(this))
-    this.player.on('adSkipped', this.onSkipped.bind(this))
-    this.player.on('adComplete', this.onComplete.bind(this))
-    this.player.on('adClick', this.onClick.bind(this))
-    this.player.on('adError', this.onError.bind(this))
+        for (let i = 0; i < ev.length; i++) {
+          let e = ev[i]
+          this.player.on(e, function (arg) {
+            nrvideo.Log.debug('Event: ' + e, arg)
+          })
+        }
+      }
+
+      this.player.on('AD_BREAK_STARTED', this.onAdBreakStart.bind(this))
+      this.player.on('AD_BREAK_COMPLETED', this.onAdBreakCompleted.bind(this))
+      this.player.on('AD_FIRST_QUARTILE', this.onFirstQuartile.bind(this))
+      this.player.on('AD_MID_POINT', this.onMidPoint.bind(this))
+      this.player.on('AD_THIRD_QUARTILE', this.onThirdQuartile.bind(this))
+      this.player.on('AD_CLICKED', this.onClick.bind(this))
+      this.player.on('AD_STARTED', this.onAdStarted.bind(this))
+      this.player.on('AD_COMPLETED', this.onCompleted.bind(this))
+      this.player.on('AD_SKIPPED', this.onSkipped.bind(this))
+      this.player.on('TIME_UPDATED', this.onTimeUpdated.bind(this))
+    }
   }
 
   unregisterListeners () {
-    this.player.off('adBlock', this.onBlock)
-    this.player.off('adRequest', this.onRequest)
-    this.player.off('adTime', this.onTime)
-    this.player.off('adStarted', this.onStarted)
-    this.player.off('adImpression', this.onImpression)
-    this.player.off('adPause', this.onPause)
-    this.player.off('adPlay', this.onPlay)
-    this.player.off('adSkipped', this.onSkipped)
-    this.player.off('adComplete', this.onComplete)
-    this.player.off('adClick', this.onClick)
-    this.player.off('adError', this.onError)
+    if (this.player.off) {
+      this.player.off('AD_BREAK_STARTED', this.onAdBreakStart)
+      this.player.off('AD_BREAK_COMPLETED', this.onAdBreakCompleted)
+      this.player.off('AD_FIRST_QUARTILE', this.onFirstQuartile)
+      this.player.off('AD_MID_POINT', this.onMidPoint)
+      this.player.off('AD_THIRD_QUARTILE', this.onThirdQuartile)
+      this.player.off('AD_CLICKED', this.onClick)
+      this.player.off('AD_STARTED', this.onAdStarted)
+      this.player.off('AD_COMPLETED', this.onCompleted)
+      this.player.off('AD_SKIPPED', this.onSkipped)
+      this.player.off('TIME_UPDATED', this.onTimeUpdated)
+    }
   }
 
-  onBlock () {
-    // Special event only for jwp
-    this.emit('AD_BLOCKED', this.getAttributes())
+  processEvent (e) {
+    switch (e.name) {
+      case 'AD_BREAK_STARTED':
+        this.onAdBreakStart.apply(this, e.args)
+        break
+      case 'AD_BREAK_COMPLETED':
+        this.onAdBreakCompleted.apply(this, e.args)
+        break
+      case 'AD_FIRST_QUARTILE':
+        this.onFirstQuartile.apply(this, e.args)
+        break
+      case 'AD_MID_POINT':
+        this.onMidPoint.apply(this, e.args)
+        break
+      case 'AD_THIRD_QUARTILE':
+        this.onThirdQuartile.apply(this, e.args)
+        break
+      case 'AD_CLICKED':
+        this.onClick.apply(this, e.args)
+        break
+      case 'AD_STARTED':
+        this.onAdStarted.apply(this, e.args)
+        break
+      case 'AD_COMPLETED':
+        this.onCompleted.apply(this, e.args)
+        break
+      case 'AD_SKIPPED':
+        this.onSkipped.apply(this, e.args)
+        break
+      case 'TIME_UPDATED':
+        this.onTimeUpdated.apply(this, e.args)
+        break
+    }
   }
 
-  onRequest (e) {
-    this.sendRequest()
+  onAdBreakStart () {
+    this.sendAdBreakStart()
   }
 
-  onTime (e) {
-    this.playhead = e.position
-    this.duration = e.duration
+  onAdBreakCompleted () {
+    this.sendAdBreakEnd()
+  }
+
+  onFirstQuartile () {
+    this.sendAdQuartile({ quartile: 1 })
+  }
+
+  onMidPoint () {
+    this.sendAdQuartile({ quartile: 2 })
+  }
+
+  onThirdQuartile () {
+    this.sendAdQuartile({ quartile: 3 })
+  }
+
+  onAdStarted (id, title, provider) {
+    this.id = id
+    this.title = title
+    this.provider = provider
+    this.player.getAdDuration((duration) => { this.duration = duration })
     this.sendRequest()
     this.sendStart()
   }
 
-  onStarted (e) {
-    this.resource = e.tag
-    this.title = e.adtitle
-  }
-
-  onImpression (e) {
-    this.resource = e.tag
-    this.title = e.adtitle
-  }
-
-  onPause (e) {
-    this.sendPause()
-  }
-
-  onPlay (e) {
-    this.sendResume()
+  onTimeUpdated (playhead) {
+    if (this.state.isRequested) this.playhead = playhead * 1000
   }
 
   onSkipped (e) {
@@ -98,24 +169,12 @@ export default class JwplayerAdsTracker extends nrvideo.VideoTracker {
     this.resetValues()
   }
 
-  onComplete (e) {
+  onCompleted (e) {
     this.sendEnd()
     this.resetValues()
   }
 
   onClick (e) {
-    this.sendAdClick({ url: e.tag })
-  }
-
-  onError (e) {
-    this.sendError({ errorMessage: e.message })
-    this.sendEnd()
-  }
-
-  resetValues () {
-    this.playhead = undefined
-    this.duration = undefined
-    this.resource = undefined
-    this.title = undefined
+    this.sendAdClick()
   }
 }

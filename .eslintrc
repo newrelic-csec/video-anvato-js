@@ -10,6 +10,7 @@
     "globals": {
         "newrelic": true,
         "nrvideo": true,
-        "jwplayer": true
+        "AnvatoPlayer": true,
+        "anvp": true
     }
 }
