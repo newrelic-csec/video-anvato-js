@@ -8,6 +8,26 @@ New Relic video tracking for Anvato.
 
 This video monitor solutions works on top of New Relic's **Browser Agent**.
 
+## Build
+
+Install dependencies:
+
+```
+$ npm install
+```
+
+And build:
+
+```
+$ npm run build:dev
+```
+
+Or if you need a production build:
+
+```
+$ npm run build
+```
+
 ## Notice
 
 This tracker is designed to follow the specifications of [Anvato version 3 SDK](https://dev.anvato.net/api/playerv3).
